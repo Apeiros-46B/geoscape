@@ -42,7 +42,7 @@ export class Renderer {
 			varying mat4 invProjMat;
 			varying mat4 invViewMat;
 
-			const uint VIEW_DIAMETER = 10u;
+			const uint VIEW_DIAMETER = uint(${VIEW_DIAMETER});
 
 			void main() {
 				vec3 posPre = position + vec3(0.5);
@@ -80,7 +80,7 @@ export class Renderer {
 			varying mat4 invProjMat;
 			varying mat4 invViewMat;
 
-			const float viewDiameter = 10.0;
+			const float viewDiameter = float(${VIEW_DIAMETER});
 
 			struct Ray {
 				vec3 pos;
@@ -245,19 +245,21 @@ Hit marchXZ(Ray primary) {
                 // }
 
 				if (hit.hit) {
-                    //
-                    // float normY = clamp((hit.pos.y - chunkMinY) / (chunkMaxY - chunkMinY), 0.0, 1.0);
-                    // vec3 baseColor = heightColor(normY);
-                    // vec3 lightDir = normalize(vec3(0.5, 2.0, 0.5));
-                    // float lightIntensity = clamp(dot(normalize(vec3(0.5, 1.0, 0.5)), lightDir), 0.0, 1.0);
-                    // vec3 shadowTint = vec3(0.2, 0.5, 0.1);
-                    // vec3 finalColor = mix(shadowTint, baseColor, lightIntensity);
-                    // gl_FragColor = vec4(finalColor, 1.0);
-
+					const bool USE_COLOR = false;
+					if (USE_COLOR) {
+						float normY = clamp((hit.pos.y - chunkMinY) / (chunkMaxY - chunkMinY), 0.0, 1.0);
+						vec3 baseColor = heightColor(normY);
+						vec3 lightDir = normalize(vec3(0.5, 2.0, 0.5));
+						float lightIntensity = clamp(dot(normalize(vec3(0.5, 1.0, 0.5)), lightDir), 0.0, 1.0);
+						vec3 shadowTint = vec3(0.2, 0.5, 0.1);
+						vec3 finalColor = mix(shadowTint, baseColor, lightIntensity);
+						gl_FragColor = vec4(finalColor, 1.0);
+					} else {
+						gl_FragColor = vec4(vec3(float(hit.steps) / float(256)) * 2.0, 1.0);
+					}
 
 					// gl_FragColor = vec4(hit.pos, 1.0);
 					// gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
-					gl_FragColor = vec4(vec3(float(hit.steps) / float(256)) * 2.0, 1.0);
 				} else {
 					// gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
 					discard;
