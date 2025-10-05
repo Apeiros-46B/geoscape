@@ -8,7 +8,7 @@ varying vec3 localPos;
 varying mat4 invProjMat;
 varying mat4 invViewMat;
 
-const float viewDiameter = 5.0;
+const float viewDiameter = 10.0;
 
 struct Ray {
 	vec3 pos;

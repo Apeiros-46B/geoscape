@@ -3,7 +3,7 @@ import { Input } from '../input';
 import { MovableCamera } from './camera';
 import { ChunkManager } from '../core/chunkManager';
 
-const VIEW_DIAMETER = 5; // Side length of the visible x-z rectangle of chunks
+const VIEW_DIAMETER = 10; // Side length of the visible x-z rectangle of chunks
 const CHUNK_SIZE = 32;   // Side length of a chunk in pixels?
 const HEIGHTMAP_SIZE = VIEW_DIAMETER*CHUNK_SIZE; // in pixels
 
@@ -42,7 +42,7 @@ export class Renderer {
 			varying mat4 invProjMat;
 			varying mat4 invViewMat;
 
-			const uint VIEW_DIAMETER = 5u;
+			const uint VIEW_DIAMETER = 10u;
 
 			void main() {
 				vec3 posPre = position + vec3(0.5);
@@ -80,7 +80,7 @@ export class Renderer {
 			varying mat4 invProjMat;
 			varying mat4 invViewMat;
 
-			const float viewDiameter = 5.0;
+			const float viewDiameter = 10.0;
 
 			struct Ray {
 				vec3 pos;
@@ -245,19 +245,19 @@ Hit marchXZ(Ray primary) {
                 // }
 
 				if (hit.hit) {
-
-                    float normY = clamp((hit.pos.y - chunkMinY) / (chunkMaxY - chunkMinY), 0.0, 1.0);
-                    vec3 baseColor = heightColor(normY);
-                    vec3 lightDir = normalize(vec3(0.5, 2.0, 0.5));
-                    float lightIntensity = clamp(dot(normalize(vec3(0.5, 1.0, 0.5)), lightDir), 0.0, 1.0);
-                    vec3 shadowTint = vec3(0.2, 0.5, 0.1);
-                    vec3 finalColor = mix(shadowTint, baseColor, lightIntensity);
-                    gl_FragColor = vec4(finalColor, 1.0);
+                    //
+                    // float normY = clamp((hit.pos.y - chunkMinY) / (chunkMaxY - chunkMinY), 0.0, 1.0);
+                    // vec3 baseColor = heightColor(normY);
+                    // vec3 lightDir = normalize(vec3(0.5, 2.0, 0.5));
+                    // float lightIntensity = clamp(dot(normalize(vec3(0.5, 1.0, 0.5)), lightDir), 0.0, 1.0);
+                    // vec3 shadowTint = vec3(0.2, 0.5, 0.1);
+                    // vec3 finalColor = mix(shadowTint, baseColor, lightIntensity);
+                    // gl_FragColor = vec4(finalColor, 1.0);
 
 
 					// gl_FragColor = vec4(hit.pos, 1.0);
 					// gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
-					// gl_FragColor = vec4(vec3(float(hit.steps) / float(64)) * 2.0, 1.0);
+					gl_FragColor = vec4(vec3(float(hit.steps) / float(256)) * 2.0, 1.0);
 				} else {
 					// gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
 					discard;
