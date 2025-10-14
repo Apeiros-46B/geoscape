@@ -102,7 +102,8 @@ void main() {
 
 	if (hit.hit) {
 #if COLOR_MODE == 0
-		float normY = clamp((hit.pos.y - chunkMinY) / (chunkMaxY - chunkMinY), 0.0, 1.0);
+		// float normY = clamp((hit.pos.y - chunkMinY) / (chunkMaxY - chunkMinY), 0.0, 1.0);
+		float normY = clamp(hit.pos.y / 3.0, 0.0, 1.0);
 		vec3 baseColor = heightColor(normY);
 		vec3 lightDir = normalize(vec3(0.5, 2.0, 0.5));
 		float lightIntensity = clamp(dot(normalize(vec3(0.5, 1.0, 0.5)), lightDir), 0.0, 1.0);
