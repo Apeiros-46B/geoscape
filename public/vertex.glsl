@@ -14,7 +14,7 @@ void main() {
 
 	vec3 pos = posPre;
 	pos.xz += transforms.xz;
-	pos.y = (pos.y) * transforms.w + transforms.y;
+	pos.y = (pos.y) * transforms.w;
 
 	chunkMinY = transforms.y;
 	chunkMaxY = transforms.y + transforms.w;

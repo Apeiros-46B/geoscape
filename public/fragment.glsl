@@ -112,8 +112,10 @@ void main() {
 		gl_FragColor = vec4(finalColor, 1.0);
 #elif COLOR_MODE == 1
 		gl_FragColor = vec4(vec3(float(hit.steps) / float(256)) * 2.0, 1.0);
-#elif COLOR_NODE == 2
+#elif COLOR_MODE == 2
 		gl_FragColor = vec4(vec3(hit.pos.y / (chunkMaxY - chunkMinY)), 1.0);
+#elif COLOR_MODE == 3
+		gl_FragColor = vec4(vec3(float(int(hit.pos.y * 32.0) % 2)), 1.0);
 #endif
 	} else {
 		discard;
