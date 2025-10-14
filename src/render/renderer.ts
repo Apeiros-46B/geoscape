@@ -101,13 +101,26 @@ export class Renderer {
 				return Ray(localPos, normalize(dir.xyz));
 			}
 
-			bool outOfChunk(vec3 pos) {
-				return pos.x < 0.0
-						|| pos.x > 1.0
-						|| pos.z < 0.0
-						|| pos.z > 1.0
+			bool outOfChunk(vec3 pos, int ofs) {
+				float lo = (-1.0 + float(ofs)) / 32.0;
+				float hi = (32.0 - float(ofs)) / 32.0;
+				return pos.x < lo
+						|| pos.x > hi
+						|| pos.z < lo
+						|| pos.z > hi
 						|| pos.y < chunkMinY
 						|| pos.y > chunkMaxY;
+			}
+
+			bool OOC32(ivec3 pos, int ofs) {
+				int lo = -1 + ofs;
+				int hi = 32 - ofs;
+				return pos.x < lo
+						|| pos.x > hi
+						|| pos.z < lo
+						|| pos.z > hi
+						|| pos.y < int(chunkMinY * 32.0)
+						|| pos.y > int(chunkMaxY * 32.0);
 			}
 
 			// xz between zero and one, representing pos in chunk
@@ -117,13 +130,28 @@ export class Renderer {
 				return texture(heightmap, xz).r;
 			}
 
+#define TEST_HEIGHT 1
+
 			bool sampleHeight(vec3 pos) {
+#if TEST_HEIGHT
+				return pos.x > 15.0/32.0 && pos.z > 15.0/32.0 && pos.x < 17.0/32.0 && pos.z < 17.0/32.0 && pos.y < chunkMaxY - chunkMinY;
+#else
 				float y = pos.y;
 				vec2 uv = (floor(pos.xz * 32.0) + 0.5) / 32.0;
 				uv += bufIdx;
 				uv /= viewDiameter;
 				float height = texture(heightmap, uv).r;
 				return height > y + 1e-4;
+#endif
+			}
+
+			bool sampleHeight32(ivec3 pos) {
+				vec3 p = vec3(pos);
+				float y = p.y / 32.0;
+				vec2 uv = (floor(p.xz) + 0.5) / 32.0;
+				uv += bufIdx;
+				uv /= viewDiameter;
+				return texture(heightmap, uv).r > y;
 			}
 
 Hit marchXZ(Ray primary) {
@@ -157,7 +185,7 @@ Hit marchXZ(Ray primary) {
         // Compute current world-space position
         vec3 currPos = P + t * D;
 
-        if (outOfChunk(currPos)) break;
+        if (outOfChunk(currPos, 0)) break;
 
         // Sample height at XZ
         float h = getHeight(currPos.xz);
@@ -196,8 +224,8 @@ Hit marchXZ(Ray primary) {
 				tMax.z = (stepDir.z > 0.0 ? 1.0 - voxelFrac.z : voxelFrac.z) * invD.z / 32.0;
 
 				for (uint i = 0u; i < max(64u, uint(chunkMaxY * 32.0) + 64u); i++) {
-					if (outOfChunk(P)) break;
-					if (sampleHeight(P)) return Hit(true, P, i);
+					if (outOfChunk(P + stepDir / 32.0, 0)) break;
+					if (sampleHeight(P) && !outOfChunk(P, 1)) return Hit(true, P, i);
 					if (tMax.x < tMax.y && tMax.x < tMax.z) {
 						P.x += stepDir.x / 32.0;
 						tMax.x += tDelta.x;
@@ -211,6 +239,40 @@ Hit marchXZ(Ray primary) {
 				}
 
 				return Hit(false, P, 0u);
+			}
+
+			Hit march32(Ray primary) {
+				vec3 P = primary.pos * 32.0;
+				vec3 D = primary.dir;
+
+				vec3 sgn = sign(D);
+				vec3 Pf = floor(P + 0.00002);
+
+				ivec3 step = ivec3(sgn);
+				ivec3 pos = ivec3(Pf);
+
+				vec3 dt = abs(length(D) / D);
+				vec3 ts = ((sgn * (Pf - P)) + (sgn * 0.5) + 0.5) * dt;
+
+				bvec3 mask;
+				uint i;
+
+				for (i = 0u; i < max(64u, uint(chunkMaxY * 32.0) + 64u); i++) {
+					if (OOC32(pos + step, 0)) break;
+					if (sampleHeight32(pos) && !OOC32(pos, 1)) return Hit(true, vec3(pos) / 32.0, i);
+					if (ts.x < ts.y && ts.x < ts.z) {
+						ts.x += dt.x;
+						pos.x += step.x;
+					} else if (ts.y < ts.z) {
+						ts.y += dt.y;
+						pos.y += step.y;
+					} else {
+						ts.z += dt.z;
+						pos.z += step.z;
+					}
+				}
+
+				return Hit(false, vec3(pos), i);
 			}
 
             vec3 heightColor(float h) {
@@ -237,7 +299,9 @@ Hit marchXZ(Ray primary) {
                
 				Ray ray = getPrimaryRay();
 				Hit hit;
-				hit = march(ray);
+				// hit = march(ray);
+				// hit = marchXZ(ray);
+				hit = march32(ray);
                 // if (dot(ray.dir, DOWN) >= sqrt(2.0)/2.0) {
                 //     hit = marchXZ(ray);
                 // } else {
@@ -255,7 +319,8 @@ Hit marchXZ(Ray primary) {
 						vec3 finalColor = mix(shadowTint, baseColor, lightIntensity);
 						gl_FragColor = vec4(finalColor, 1.0);
 					} else {
-						gl_FragColor = vec4(vec3(float(hit.steps) / float(256)) * 2.0, 1.0);
+						// gl_FragColor = vec4(vec3(float(hit.steps) / float(256)) * 2.0, 1.0);
+						gl_FragColor = vec4(vec3(hit.pos.y / (chunkMaxY - chunkMinY)), 1.0);
 					}
 
 					// gl_FragColor = vec4(hit.pos, 1.0);
