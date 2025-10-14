@@ -48,10 +48,8 @@ export class MovableCamera {
 
 	// we use a handler instead of the centralized input system due to less stutter
 	tickMouse(evt: PointerEvent) {
-		// rotate around the y axis, which is left/right rotation
-		this.inner.rotateY(evt.movementX * ROT_SPEED * this.#lastDt);
-		this.inner.rotateX(evt.movementY * ROT_SPEED * this.#lastDt);
-		// TODO: fix janky rolling, it should only be pitch and yaw
+		this.inner.rotateOnWorldAxis(UP_VEC, evt.movementX * ROT_SPEED * this.#lastDt); // yaw
+		this.inner.rotateX(evt.movementY * ROT_SPEED * this.#lastDt); // pitch
 	}
 
 	tick(dt: number) {
